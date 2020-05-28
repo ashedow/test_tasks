@@ -1,0 +1,60 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$mach_quant = 6
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # See box list
+  #   http://www.vagrantbox.es/
+    config.vm.box = "ubuntu/xenial64"
+    config.vm.box_check_update=false
+
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  # config.vm.network "private_network", ip: "192.168.33.10"
+  # config.vm.network "public_network", type: "dhcp", bridge: "eth1" 
+
+  # config.ssh.forward_agent = true
+    config.ssh.insert_key = false
+  # config.vm.synced_folder '.', '/vagrant', type: 'nfs'
+
+    config.vm.provider :virtualbox do |vb|
+        vb.gui = false
+
+        # Enable creating symlinks between guest and host
+        vb.customize [
+        # see https://github.com/mitchellh/vagrant/issues/713#issuecomment-17296765
+        # 1) Added these lines to my config :
+        # 2) run this command in an admin command prompt on windows :
+        #    >> fsutil behavior set SymlinkEvaluation L2L:1 R2R:1 L2R:1 R2L:1
+        #    see http://technet.microsoft.com/ja-jp/library/cc785435%28v=ws.10%29.aspx
+        # 3) REBOOT HOST MACHINE
+        # 4) 'vagrant up' from an admin command prompt
+        "setextradata", :id,
+        "VBoxInternal2/SharedFoldersEnableSymlinksCreate/vagrant-root", "1"
+        ]
+
+        vb.customize [
+        'modifyvm', :id,
+        '--natdnshostresolver1', 'on',
+        '--memory', '512',
+        '--cpus', '1'
+        ]
+    end
+
+    (1..$mach_quant).each do |i|
+        config.vm.define "node#{i}" do |node|
+            node.vm.network "public_network", ip: "192.168.1.#{24+i}"
+            node.vm.hostname = "node#{i}"
+        end
+    end
+
+    # Run Ansible from the Vagrant Host
+    config.vm.provision "ansible" do |ansible|
+        ansible.playbook = "playbook.yml"
+    end
+
+end

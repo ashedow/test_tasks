@@ -34,3 +34,9 @@ done
 ## Bonus track
 
 Explain what is wrong with that script and how you could make it better.
+
+---
+
+* No user blooper
+* Add help
+* Add install nc block
